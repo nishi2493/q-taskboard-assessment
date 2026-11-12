@@ -1,6 +1,6 @@
 # BUGS.md — TaskBoard bug report (Part 1)
 
-Top 4 findings, ordered by business impact. File and line references are against the **original, unfixed code** (commit `8b59efc`, before any Part 2 changes).
+Top 4 findings, ordered by business impact. File and line references are against the **original vulnerable code** (commit `e474f1e`), before the security fixes were applied.
 
 | # | Finding | Category | Severity |
 |---|---------|----------|----------|
@@ -9,9 +9,11 @@ Top 4 findings, ordered by business impact. File and line references are against
 | 3 | `GET /api/projects/:id` returns every member's `passwordHash` | Security | High |
 | 4 | Duplicate / case-variant email accounts allowed (no unique constraint) | Data Integrity | Medium |
 
-Ranking rationale: #1 gives full database read access to any project member (including a viewer), a superset of #3. #2 lets anyone tamper with other teams' data. #3 hands out credential material with a plain GET. #4 corrupts the identity model but needs more effort to exploit.
+**Ranking rationale:** #1 gives full database read access to any project member (including a viewer), a superset of #3. #2 lets anyone tamper with other teams' data. #3 hands out credential material with a plain GET. #4 corrupts the identity model but needs more effort to exploit.
 
 No UI-only findings were included; all four were found by reading the code and confirmed through the API.
+
+**Evidence note:** Bugs 1 and 2 were captured against commit `e474f1e`, before the security fixes were applied. The curl outputs below must be captured from that original vulnerable revision. Do not substitute results from the fixed `main` branch.
 
 ## Setup for the curl proofs
 
@@ -57,7 +59,11 @@ curl -s -G -H "Authorization: Bearer $DEV" \
   "$BASE/api/projects/$PID/tasks"
 ```
 
-**Observed output:** _(paste terminal output here)_
+**Observed output — replace this section with the matching actual output from `proof-output.txt`:**
+
+```text
+[PASTE THE COMPLETE, MATCHING SECTIONS: ===== BUG 1a, ===== BUG 1b, AND ===== BUG 1c]
+```
 
 **Expected:** 1a returns 200 with no results; 1b and 1c return only matching tasks of this project.
 
@@ -83,9 +89,13 @@ curl -i -s -X PATCH -H "Authorization: Bearer $LINA" -H "Content-Type: applicati
   -d '{"status":"done"}' $BASE/api/tasks/$TID
 ```
 
-**Observed output:** _(paste terminal output here)_
+**Observed output — replace this section with the matching actual output from `proof-output.txt`:**
 
-**Expected:** both return `403 Forbidden`. This is what `src/tests/part2.test.ts` Test A asserts.
+```text
+[PASTE THE COMPLETE, MATCHING SECTIONS: ===== BUG 2a AND ===== BUG 2b]
+```
+
+**Expected:** both return `403 Forbidden`.
 
 ---
 
@@ -104,7 +114,11 @@ curl -s -H "Authorization: Bearer $DEV" $BASE/api/projects/$PID \
   | grep -o '"passwordHash":"[^"]*"' | head -5
 ```
 
-**Observed output:** _(paste terminal output here)_
+**Observed output — replace this section with the matching actual output from `proof-output.txt`:**
+
+```text
+[PASTE THE SECTION STARTING ===== BUG 3. Redact most hash characters if needed, but retain proof that passwordHash is present.]
+```
 
 **Expected:** no `passwordHash` anywhere in the response; use `select: { id, name, email }` for related users.
 
@@ -133,7 +147,11 @@ for i in 1 2 3 4 5; do
 done; wait
 ```
 
-**Observed output:** _(paste terminal output here)_
+**Observed output — replace this section with the matching actual output from `proof-output.txt`:**
+
+```text
+[PASTE THE SECTION STARTING ===== BUG 4a. Include BUG 4b too if its output was captured.]
+```
 
 **Expected:** the second registration is rejected; emails are lower-cased on write and the column has a unique index.
 
